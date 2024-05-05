@@ -1,0 +1,12 @@
+{
+  "name": "obrc-nodejs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node obrc.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
