@@ -118,7 +118,7 @@ if (isMainThread) {
 			measurement.Min = Math.min(tempFloat, measurement.Min)
 			measurement.Max = Math.max(tempFloat, measurement.Max)
 		}
-    }
+	}
 
 	parentPort.postMessage(localMeasurements)
 }
