@@ -3,12 +3,13 @@ import { createInterface } from "node:readline"
 import { isMainThread, Worker, workerData, parentPort, threadId } from "node:worker_threads"
 
 const NUM_THREADS = 31
+const FILE_NAME = "./measurements-100000.txt"
 
 if (isMainThread) {
 	// MAIN
-	function runWorker({ globalMeasurements, fileName, start, end }) {
+	function runWorker({ globalMeasurements, start, end }) {
 		return new Promise((resolve, reject) => {
-			const worker = new Worker(import.meta.filename, { workerData: { fileName, start, end } })
+			const worker = new Worker(import.meta.filename, { workerData: { start, end } })
 
 			function onMessage(localMeasurements) {
 				Object.entries(localMeasurements).forEach(([station, { Min, Max, Sum, Count }]) => {
@@ -43,8 +44,7 @@ if (isMainThread) {
 	}
 
 	const globalMeasurements = {}
-	const fileName = "../1brc.data/measurements-10000000.txt"
-	const fileHandle = await open(fileName, "r")
+	const fileHandle = await open(FILE_NAME, "r")
 	const fileStat = await fileHandle.stat()
 	const fileSizeInBytes = fileStat.size
 	const chunkSize = Math.round(fileSizeInBytes / NUM_THREADS)
@@ -65,13 +65,13 @@ if (isMainThread) {
 		}
 
 		const absoluteLastNewLineIndex = position + lastNewLineIndex
-		workers.push(runWorker({ globalMeasurements, fileName, start: lastPos, end: absoluteLastNewLineIndex - 1 }))
+		workers.push(runWorker({ globalMeasurements, start: lastPos, end: absoluteLastNewLineIndex - 1 }))
 		lastPos = absoluteLastNewLineIndex + 1
 	}
 
 	// process remaining
 	if (lastPos < fileSizeInBytes) {
-		workers.push(runWorker({ globalMeasurements, fileName, start: lastPos, end: fileSizeInBytes }))
+		workers.push(runWorker({ globalMeasurements, start: lastPos, end: fileSizeInBytes }))
 	}
 
 	await fileHandle.close()
@@ -84,7 +84,7 @@ if (isMainThread) {
 		const { Min, Max, Sum, Count } = globalMeasurements[station]
 		const Mean = (Sum / Count).toFixed(1)
 
-		process.stdout.write(`${station}=${Min}/${Mean}/${Max}`)
+		process.stdout.write(`${station}=${Min.toFixed(1)}/${Mean}/${Max.toFixed(1)}`)
 		if (stationIdx !== sortedStations.length - 1) {
 			process.stdout.write(", ")
 		}
@@ -94,7 +94,7 @@ if (isMainThread) {
 	// WORKER
 	const localMeasurements = {}
 	const { fileName, start, end } = workerData
-	const fileHandle = await open(fileName, "r")
+	const fileHandle = await open(FILE_NAME, "r")
 
 	const readLineInterface = createInterface({
 		input: fileHandle.createReadStream({ start, end }),
